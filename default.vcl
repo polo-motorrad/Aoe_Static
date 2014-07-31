@@ -24,7 +24,8 @@ sub vcl_recv {
                 struct sockaddr_in *client_ip_si = (struct sockaddr_in *) client_ip_ss;
                 struct in_addr *client_ip_ia = &(client_ip_si->sin_addr);
 
-                char *xff_ip = VRT_GetHdr(sp, HDR_REQ, "\020X-Real-IP:");
+                // len("X-Real-IP:") = 012 (octal numeral system)
+                char *xff_ip = VRT_GetHdr(sp, HDR_REQ, "\012X-Real-IP:");
                 if (xff_ip != NULL) {
                     // Copy the ip address into the struct's sin_addr.
                     inet_pton(AF_INET, xff_ip, client_ip_ia);
@@ -32,8 +33,7 @@ sub vcl_recv {
             }C
             #########################################################################################################
             #########################################################################################################
-    }
-    else if (req.http.X-Forwarded-For) {
+    } else if (req.http.X-Forwarded-For) {
         # Ensure we only have a single IP in X-Forwarded-For
         set req.http.X-Forwarded-For = regsub(req.http.X-Forwarded-For, ",.*", "");
 
@@ -46,6 +46,7 @@ sub vcl_recv {
             struct sockaddr_in *client_ip_si = (struct sockaddr_in *) client_ip_ss;
             struct in_addr *client_ip_ia = &(client_ip_si->sin_addr);
 
+            // len("X-Forwarded-For:") = 020 (octal numeral system)
             char *xff_ip = VRT_GetHdr(sp, HDR_REQ, "\020X-Forwarded-For:");
             if (xff_ip != NULL) {
                 // Copy the ip address into the struct's sin_addr.
