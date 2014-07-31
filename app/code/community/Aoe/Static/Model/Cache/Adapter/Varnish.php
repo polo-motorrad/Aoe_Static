@@ -13,13 +13,15 @@ class Aoe_Static_Model_Cache_Adapter_Varnish implements Aoe_Static_Model_Cache_A
      */
     public function __construct()
     {
+        /** @var Aoe_Static_Helper_Data $helper */
+        $helper = Mage::helper('aoestatic');
         $serverConfig = Mage::getStoreConfig('dev/aoestatic/servers');
         if (strpos($serverConfig, ',') !== false) {
             // old format - comma-separated list of servers
-            $this->_varnishServers = Mage::helper('aoestatic')->trimExplode(",", $serverConfig, true);
+            $this->_varnishServers = $helper->trimExplode(",", $serverConfig, true);
         } else {
             // new format - newline-separated list of servers
-            $this->_varnishServers = Mage::helper('aoestatic')->trimExplode("\n", $serverConfig, true);
+            $this->_varnishServers = $helper->trimExplode("\n", $serverConfig, true);
         }
     }
 
@@ -34,7 +36,7 @@ class Aoe_Static_Model_Cache_Adapter_Varnish implements Aoe_Static_Model_Cache_A
     }
 
     /**
-     * Purge an array of urls on all varnish servers.
+     * Purge an array of urls on all varnish servers
      *
      * @param array $urls
      * @return array with all errors
@@ -107,6 +109,12 @@ class Aoe_Static_Model_Cache_Adapter_Varnish implements Aoe_Static_Model_Cache_A
         return $errors;
     }
 
+    /**
+     * Purge an array of tags on all varnish servers
+     *
+     * @param array $tags
+     * @return array with all errors
+     */
     public function purgeTags(array $tags)
     {
         $errors = array();

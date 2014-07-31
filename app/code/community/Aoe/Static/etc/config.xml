@@ -53,7 +53,7 @@
                 <observers>
                     <aoestatic>
                         <class>aoestatic/asyncCacheObserver</class>
-                        <method>aoeasynccacheProcessqueuePostprocessjobcollection</method>
+                        <method>processJobs</method>
                     </aoestatic>
                 </observers>
             </aoeasynccache_processqueue_postprocessjobcollection>

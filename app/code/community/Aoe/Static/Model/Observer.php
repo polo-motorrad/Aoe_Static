@@ -8,6 +8,7 @@ class Aoe_Static_Model_Observer
 {
     /**
      * Indicates, if there are messages to show on the current page
+     *
      * @var bool
      */
     protected $messagesToShow = false;
@@ -87,7 +88,7 @@ class Aoe_Static_Model_Observer
             $cacheControl->applyCacheHeaders();
         }
 
-        if(Mage::getStoreConfigFlag('dev/aoestatic/debug')) {
+        if (Mage::getStoreConfigFlag('dev/aoestatic/debug')) {
             $response->setHeader('X-Aoestatic-Debug', 'true');
         }
 
@@ -215,7 +216,7 @@ class Aoe_Static_Model_Observer
     }
 
     /**
-     * manual cache purging of specified URLs
+     * Manual cache purging of specified URLs
      *
      * @param Varien_Event_Observer $event
      */
@@ -278,7 +279,7 @@ class Aoe_Static_Model_Observer
      */
     public function applicationCleanCache($observer)
     {
-        // if Varnish is not enabled on admin don't do anything
+        // if "Aoe Static" cache type is not enabled on admin - do anything
         if (!Mage::app()->useCache('aoestatic')) {
             return $this;
         }
@@ -313,7 +314,7 @@ class Aoe_Static_Model_Observer
             return $this;
         }
 
-        $purgetags = array();
+        $purgeTags = array();
 
         /** @var Aoe_Static_Model_Cache_Control $cacheControl */
         $cacheControl = Mage::getSingleton('aoestatic/cache_control');
@@ -321,27 +322,27 @@ class Aoe_Static_Model_Observer
         // compute the urls for affected entities
         foreach ($tags as $tag) {
             //catalog_product_100 or catalog_category_186
-            $tag_fields = explode('_', $tag);
-            if (count($tag_fields) == 3) {
-                if (in_array($tag_fields[1], array('product', 'category', 'page', 'block'))) {
-                    $purgetags[] = $cacheControl->normalizeTag(array($tag_fields[1], $tag_fields[2]), false);
+            $tagFields = explode('_', $tag);
+            if (count($tagFields) == 3) {
+                if (in_array($tagFields[1], array('product', 'category', 'page', 'block'))) {
+                    $purgeTags[] = $cacheControl->normalizeTag(array($tagFields[1], $tagFields[2]), false);
                 }
             }
         }
 
-        if (!empty($purgetags)) {
-            $errors = $helper->purgeTags($purgetags);
+        if (!empty($purgeTags)) {
+            $errors = $helper->purgeTags($purgeTags, Mage::app()->getRequest()->getParam('store', 0));
             if (!empty($errors)) {
                 $session->addError($helper->__("Some Static purges failed: <br/>") . implode("<br/>", $errors));
             } else {
-                $count = count($purgetags);
+                $count = count($purgeTags);
                 if ($count > 5) {
-                    $purgetags = array_slice($purgetags, 0, 5);
-                    $purgetags[] = '...';
-                    $purgetags[] = $helper->__("(Total number of purged urls: %d)", $count);
+                    $purgeTags = array_slice($purgeTags, 0, 5);
+                    $purgeTags[] = '...';
+                    $purgeTags[] = $helper->__("(Total number of purged tags: %d)", $count);
                 }
                 $session->addSuccess(
-                    $helper->__("Tag purges have been submitted successfully:<br/>") . implode("<br />", $purgetags)
+                    $helper->__("Tag purges have been submitted successfully:<br/>") . implode("<br />", $purgeTags)
                 );
             }
         }

@@ -2,13 +2,25 @@
 
 class Aoe_Static_Model_Cache_Control
 {
-    /** @var array Tags for tag-based purging */
+    /**
+     * Tags for tag-based purging
+     *
+     * @var array
+     */
     protected $_tags = array();
 
-    /** @var int minimum maxage */
+    /**
+     * Minimum maxage
+     *
+     * @var int
+     */
     protected $_maxAge = 0;
 
-    /** @var bool switch to disable sending out of cache headers */
+    /**
+     * Switch to disable sending out of cache headers
+     *
+     * @var bool
+     */
     protected $_enabled = true;
 
     /** @var string */
@@ -36,7 +48,7 @@ class Aoe_Static_Model_Cache_Control
     }
 
     /**
-     * computes minimum max-age
+     * Compute minimum max-age
      *
      * @param int|array $maxAge
      */
@@ -54,7 +66,7 @@ class Aoe_Static_Model_Cache_Control
     }
 
     /**
-     * loads specific max-age from database
+     * Load specific max-age from database
      *
      * @param $request Mage_Core_Controller_Request_Http
      */
@@ -77,7 +89,7 @@ class Aoe_Static_Model_Cache_Control
     }
 
     /**
-     * adds tag(s) to current cache
+     * Add tag(s) to current cache
      *
      * @param $tags array|string
      * @return $this
@@ -123,7 +135,7 @@ class Aoe_Static_Model_Cache_Control
     }
 
     /**
-     * applies cache-headers if enabled is true (default)
+     * Apply cache-headers if enabled is true (default)
      *
      * @return $this
      */
@@ -143,7 +155,7 @@ class Aoe_Static_Model_Cache_Control
     }
 
     /**
-     * get current category layer
+     * Get current category layer
      *
      * @return Mage_Catalog_Model_Layer
      */
@@ -153,11 +165,12 @@ class Aoe_Static_Model_Cache_Control
         if ($layer) {
             return $layer;
         }
+
         return Mage::getSingleton('catalog/layer');
     }
 
     /**
-     * collect various possible tags from current products and category/layer pages
+     * Collect various possible tags from current products and category/layer pages
      *
      * @return $this
      */
@@ -166,8 +179,11 @@ class Aoe_Static_Model_Cache_Control
         if (Mage::registry('product')) {
             $this->addTag('product-' . Mage::registry('product')->getId());
         }
-        if (($layer = $this->_getLayer()) && ($layer->getCurrentCategory()->getId() != $layer->getCurrentStore()->getRootCategoryId()) && ($layer->apply()->getProductCollection())) {
-            /** @var Mage_Catalog_Model_Layer $layer */
+
+        $layer = $this->_getLayer();
+        if ($layer && $layer->getCurrentCategory()->getId() != $layer->getCurrentStore()->getRootCategoryId()
+            && $layer->apply()->getProductCollection()
+        ) {
             $ids = $layer->getProductCollection()->getLoadedIds();
             $tags = array();
             foreach ($ids as $id) {
@@ -175,11 +191,13 @@ class Aoe_Static_Model_Cache_Control
             }
             $this->addTag($tags);
         }
+
         if (Mage::registry('current_category')) {
             /** @var Mage_Catalog_Model_Category $currentCategory */
             $currentCategory = Mage::registry('current_category');
             $this->addTag('category-' . $currentCategory->getId());
         }
+
         return $this;
     }
 }
