@@ -5,7 +5,7 @@
  */
 class Aoe_Static_Model_Cache_Adapter_Varnish implements Aoe_Static_Model_Cache_Adapter_Interface
 {
-    /** @var array  */
+    /** @var array */
     protected $_varnishServers = array();
 
     /**
@@ -46,8 +46,8 @@ class Aoe_Static_Model_Cache_Adapter_Varnish implements Aoe_Static_Model_Cache_A
         $errors = array();
 
         $regexPatterns = array();
-        foreach($urls as $k => $url) {
-            if(strpos($url, 'R:') === 0) {
+        foreach ($urls as $k => $url) {
+            if (strpos($url, 'R:') === 0) {
                 unset($urls[$k]);
                 $regexPatterns[] = substr($url, 2);
             }
@@ -73,7 +73,7 @@ class Aoe_Static_Model_Cache_Adapter_Varnish implements Aoe_Static_Model_Cache_A
                 $curlHandlers[] = $curlHandler;
             }
 
-            if(!empty($regexPatterns)) {
+            if (!empty($regexPatterns)) {
                 $curlHandler = curl_init();
                 curl_setopt($curlHandler, CURLOPT_URL, "http://" . $varnishServer);
                 curl_setopt($curlHandler, CURLOPT_CUSTOMREQUEST, 'BAN');
@@ -98,7 +98,8 @@ class Aoe_Static_Model_Cache_Adapter_Varnish implements Aoe_Static_Model_Cache_A
             if (curl_errno($curlHandler)) {
                 $errors[] = "Cannot purge url {$info['url']} due to error" . curl_error($curlHandler);
             } else if ($info['http_code'] != 200 && $info['http_code'] != 404) {
-                $errors[] = "Cannot purge url {$info['url']}, http code: {$info['http_code']}. curl error: " . curl_error($curlHandler);
+                $errors[] = "Cannot purge url {$info['url']}, http code: {$info['http_code']}. curl error: "
+                            . curl_error($curlHandler);
             }
 
             curl_multi_remove_handle($multiHandler, $curlHandler);
@@ -165,7 +166,8 @@ class Aoe_Static_Model_Cache_Adapter_Varnish implements Aoe_Static_Model_Cache_A
             if (curl_errno($curlHandler)) {
                 $errors[] = "Cannot purge tag {$info['url']} due to error" . curl_error($curlHandler);
             } else if ($info['http_code'] != 200 && $info['http_code'] != 404) {
-                $errors[] = "Cannot purge tag {$info['url']}, http code: {$info['http_code']}. curl error: " . curl_error($curlHandler);
+                $errors[] = "Cannot purge tag {$info['url']}, http code: {$info['http_code']}. curl error: "
+                            . curl_error($curlHandler);
             }
 
             curl_multi_remove_handle($multiHandler, $curlHandler);
