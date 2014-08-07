@@ -84,7 +84,7 @@ class Aoe_Static_Model_Observer
             /** @var Aoe_Static_Model_Cache_Control $cacheControl */
             $cacheControl = Mage::getSingleton('aoestatic/cache_control');
             $cacheControl->addCustomUrlMaxAge($controllerAction->getRequest());
-            $cacheControl->collectTags();
+            $cacheControl->collectTags($controllerAction);
             $cacheControl->applyCacheHeaders();
         }
 
@@ -194,25 +194,18 @@ class Aoe_Static_Model_Observer
     }
 
     /**
-     * collect tags
+     * Collect tags
      *
      * @param Varien_Event_Observer $observer
      */
     public function coreBlockAbstractToHtmlAfter(Varien_Event_Observer $observer)
     {
+        /** @var Mage_Core_Block_Abstract $block */
         $block = $observer->getBlock();
 
-        if ($block instanceof Mage_Cms_Block_Block && $block->getBlock()) {
-            Mage::getSingleton('aoestatic/cache_control')->addTag('block-' . $block->getBlock()->getId());
-        } else if ($block instanceof Mage_Cms_Block_Page) {
-            Mage::getSingleton('aoestatic/cache_control')->addTag('page-' . ($block->getPageId() ?: ($block->getPage() ? $block->getPage()->getId() : Mage::getSingleton('cms/page')->getId())));
-        } else if (($block instanceof Mage_Catalog_Block_Product_Abstract) && $block->getProductCollection()) {
-            $tags = array();
-            foreach ($block->getProductCollection()->getLoadedIds() as $id) {
-                $tags[] = 'product-' . $id;
-            }
-            Mage::getSingleton('aoestatic/cache_control')->addTag($tags);
-        }
+        /** @var Aoe_Static_Model_Cache_Control $cacheControl */
+        $cacheControl = Mage::getSingleton('aoestatic/cache_control');
+        $cacheControl->collectTagsFromBlock($block);
     }
 
     /**
@@ -314,22 +307,9 @@ class Aoe_Static_Model_Observer
             return $this;
         }
 
-        $purgeTags = array();
-
         /** @var Aoe_Static_Model_Cache_Control $cacheControl */
         $cacheControl = Mage::getSingleton('aoestatic/cache_control');
-
-        // compute the urls for affected entities
-        foreach ($tags as $tag) {
-            //catalog_product_100 or catalog_category_186
-            $tagFields = explode('_', $tag);
-            if (count($tagFields) == 3) {
-                if (in_array($tagFields[1], array('product', 'category', 'page', 'block'))) {
-                    $purgeTags[] = $cacheControl->normalizeTag(array($tagFields[1], $tagFields[2]), false);
-                }
-            }
-        }
-
+        $purgeTags = $cacheControl->filterAndNormalizeTags($tags);
         if (!empty($purgeTags)) {
             $errors = $helper->purgeTags($purgeTags, Mage::app()->getRequest()->getParam('store', 0));
             if (!empty($errors)) {
