@@ -223,29 +223,14 @@ class Aoe_Static_Model_Cache_Control
     }
 
     /**
-     * Collect all tags from all generated blocks
-     *
-     * @param Mage_Core_Controller_Varien_Action $controllerAction
-     */
-    protected function _collectBlockTags(Mage_Core_Controller_Varien_Action $controllerAction)
-    {
-        $blocks = $controllerAction->getLayout()->getAllBlocks();
-        foreach ($blocks as $block) {
-            $this->collectTagsFromBlock($block);
-        }
-    }
-
-    /**
      * Collect various possible tags from current products and category/layer pages
      *
-     * @param Mage_Core_Controller_Varien_Action $controllerAction
      * @return $this
      */
-    public function collectTags(Mage_Core_Controller_Varien_Action $controllerAction)
+    public function collectTags()
     {
         $this->_collectProductTags();
         $this->_collectCategoryTags();
-        $this->_collectBlockTags($controllerAction);
 
         return $this;
     }

@@ -7,13 +7,24 @@
 class Aoe_Static_Model_Observer
 {
     /**
-     * Indicates, if there are messages to show on the current page
+     * Registry key which should be used to pass list of products which should be skipped by Aoe_Static
+     * while collecting tags
+     */
+    const REGISTRY_SKIPPABLE_NAME = 'aoestatic_skippableProductsForPurging';
+
+    /**
+     * Indicates if there are messages to show on the current page
      *
      * @var bool
      */
-    protected $messagesToShow = false;
+    protected $_messagesToShow = false;
 
-    const REGISTRY_SKIPPABLE_NAME = 'aoestatic_skippableProductsForPurging';
+    /**
+     * Indicates whether current request is cacheable
+     *
+     * @var bool
+     */
+    protected $_isCurrentRequestCacheable = null;
 
     /**
      * Constructor
@@ -21,6 +32,22 @@ class Aoe_Static_Model_Observer
     public function __construct()
     {
         $this->_config = Mage::getSingleton('aoestatic/config');
+    }
+
+    /**
+     * Detect whether current request is cacheable.
+     * We do not cache page with messages in varnish, we do not cache post and ajax requests in varnish.
+     *
+     * @return bool
+     */
+    protected function _isCurrentRequestCacheable()
+    {
+        if ($this->_isCurrentRequestCacheable === null) {
+            $request = Mage::app()->getRequest();
+            $this->_isCurrentRequestCacheable = !$this->_messagesToShow && !$request->isAjax() && !$request->isPost();
+        }
+
+        return $this->_isCurrentRequestCacheable;
     }
 
     /**
@@ -32,7 +59,7 @@ class Aoe_Static_Model_Observer
     public function processPostDispatch(Varien_Event_Observer $observer)
     {
         // check if we have messages to display
-        $this->messagesToShow = $this->checkForMessages();
+        $this->_messagesToShow = $this->checkForMessages();
 
         /* @var $event Varien_Event */
         $event = $observer->getEvent();
@@ -80,11 +107,11 @@ class Aoe_Static_Model_Observer
             $this->applyConf($conf, $response);
         }
 
-        if (!$this->messagesToShow) {
+        if ($this->_isCurrentRequestCacheable()) {
             /** @var Aoe_Static_Model_Cache_Control $cacheControl */
             $cacheControl = Mage::getSingleton('aoestatic/cache_control');
             $cacheControl->addCustomUrlMaxAge($controllerAction->getRequest());
-            $cacheControl->collectTags($controllerAction);
+            $cacheControl->collectTags();
             $cacheControl->applyCacheHeaders();
         }
 
@@ -108,7 +135,7 @@ class Aoe_Static_Model_Observer
         if (property_exists($conf, 'headers')) {
             foreach ($conf->headers->children() as $key => $value) {
                 // skip aoestatic header if we have messages to display
-                if ($this->messagesToShow && ($key == 'aoestatic')) {
+                if ($this->_messagesToShow && $key == 'aoestatic') {
                     continue;
                 }
                 $value = $cacheMarker->replaceMarkers($value);
@@ -166,7 +193,7 @@ class Aoe_Static_Model_Observer
     public function beforeLoadLayout(Varien_Event_Observer $observer)
     {
         // check if we have messages to display
-        $this->messagesToShow = $this->checkForMessages();
+        $this->_messagesToShow = $this->checkForMessages();
 
         /* @var $controllerAction Mage_Core_Controller_Varien_Action */
         $controllerAction = $observer->getAction();
@@ -185,12 +212,12 @@ class Aoe_Static_Model_Observer
     protected function checkForMessages()
     {
         if (
-            (false === $this->messagesToShow) &&
+            (false === $this->_messagesToShow) &&
             (Mage::app()->getLayout()->getMessagesBlock()->getMessageCollection()->count() > 0)
         ) {
-            $this->messagesToShow = true;
+            $this->_messagesToShow = true;
         }
-        return $this->messagesToShow;
+        return $this->_messagesToShow;
     }
 
     /**
@@ -200,12 +227,14 @@ class Aoe_Static_Model_Observer
      */
     public function coreBlockAbstractToHtmlAfter(Varien_Event_Observer $observer)
     {
-        /** @var Mage_Core_Block_Abstract $block */
-        $block = $observer->getBlock();
+        if ($this->_isCurrentRequestCacheable()) {
+            /** @var Mage_Core_Block_Abstract $block */
+            $block = $observer->getBlock();
 
-        /** @var Aoe_Static_Model_Cache_Control $cacheControl */
-        $cacheControl = Mage::getSingleton('aoestatic/cache_control');
-        $cacheControl->collectTagsFromBlock($block);
+            /** @var Aoe_Static_Model_Cache_Control $cacheControl */
+            $cacheControl = Mage::getSingleton('aoestatic/cache_control');
+            $cacheControl->collectTagsFromBlock($block);
+        }
     }
 
     /**
@@ -267,7 +296,7 @@ class Aoe_Static_Model_Observer
     /**
      * Listens to application_clean_cache event and gets notified when a product/category/cms model is saved
      *
-     * @param $observer Mage_Core_Model_Observer
+     * @param Mage_Core_Model_Observer $observer
      * @return Aoe_Static_Model_Observer
      */
     public function applicationCleanCache($observer)
@@ -329,6 +358,11 @@ class Aoe_Static_Model_Observer
         return $this;
     }
 
+    /**
+     * Observer on controller_action_predispatch_adminhtml_cache_massRefresh event
+     *
+     * @param Varien_Event_Observer $observer
+     */
     public function controllerActionPredispatchAdminhtmlCacheMassRefresh(Varien_Event_Observer $observer)
     {
         /** @var Mage_Core_Controller_Request_Http $request */
