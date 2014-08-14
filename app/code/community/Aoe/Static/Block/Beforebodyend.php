@@ -8,50 +8,57 @@
 class Aoe_Static_Block_Beforebodyend extends Mage_Core_Block_Template
 {
     /**
-     * @var Mage_Customer_Model_Session
-     */
-    protected $session;
-
-    /**
-     * Get session
+     * Get Aoe_Static ajax call url
      *
-     * @return Mage_Customer_Model_Session
+     * @return string
      */
-    public function getSession() {
-        if (is_null($this->session)) {
-            $this->session = Mage::getSingleton('customer/session');
-        }
-        return $this->session;
+    public function getAjaxCallUrl()
+    {
+        return Mage::getUrl('aoestatic/call/index', array('_secure' => Mage::app()->getStore()->isCurrentlySecure()));
     }
 
     /**
-     * Check if there is a logged in customer
+     * Get full action name of current page
      *
-     * @return bool
+     * @return string
      */
-    public function isLoggedIn() {
-        return $this->getSession()->isLoggedIn();
+    public function getFullActionName()
+    {
+        return $this->getAction()->getFullActionName();
     }
 
     /**
-     * Get customer name
-     *
-     * @return bool|string
-     */
-    public function getCustomerName() {
-        if ($this->isLoggedIn()) {
-            return $this->getSession()->getCustomer()->getName();
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * Get cart summary count
+     * Get id of current store
      *
      * @return int
      */
-    public function getCartSummaryCount() {
-        // return Mage::helper('checkout/cart')->getSummaryCount();
+    public function getCurrentStoreId()
+    {
+        return Mage::app()->getStore()->getId();
+    }
+
+    /**
+     * Get id of current website
+     *
+     * @return int
+     */
+    public function getCurrentWebsiteId()
+    {
+        return Mage::app()->getWebsite()->getId();
+    }
+
+    /**
+     * Get current product (if there is one in registry) id, otherwise return 0
+     *
+     * @return int
+     */
+    public function getCurrentProductId()
+    {
+        $product = Mage::registry('product');
+        if ($product && $product->getId()) {
+            return $product->getId();
+        }
+
+        return 0;
     }
 }

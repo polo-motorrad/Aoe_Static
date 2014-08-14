@@ -9,32 +9,36 @@
 class Aoe_Static_CallController extends Mage_Core_Controller_Front_Action
 {
     /**
-     * Index action. This action is called by an ajax request
+     * This action is called by an ajax request
      *
-     * @return void
      * @author Fabrizio Branca <fabrizio.branca@aoemedia.de>
      */
     public function indexAction()
     {
-        // if (!$this->getRequest()->isXmlHttpRequest()) { Mage::throwException('This is not an XmlHttpRequest'); }
         $response = array();
         $response['sid'] = Mage::getModel('core/session')->getEncryptedSessionId();
 
-        if ($currentProductId = $this->getRequest()->getParam('currentProductId')) {
+        $currentProductId = $this->getRequest()->getParam('currentProductId', false);
+        if ($currentProductId) {
             Mage::getSingleton('catalog/session')->setLastViewedProductId($currentProductId);
+
+            $product = Mage::getModel('catalog/product')->load($currentProductId);
+            if ($product) {
+                Mage::register('product', $product);
+            }
         }
 
         $this->loadLayout();
         $layout = $this->getLayout();
 
-        $requestedBlockNames = $this->getRequest()->getParam('getBlocks');
+        $requestedBlockNames = $this->getRequest()->getParam('blocks');
         if (is_array($requestedBlockNames)) {
-            foreach ($requestedBlockNames as $id => $requestedBlockName) {
+            foreach ($requestedBlockNames as $requestedBlockName) {
                 $tmpBlock = $layout->getBlock($requestedBlockName);
                 if ($tmpBlock) {
-                    $response['blocks'][$id] = $tmpBlock->toHtml();
+                    $response['blocks'][$requestedBlockName] = $tmpBlock->toHtml();
                 } else {
-                    $response['blocks'][$id] = 'BLOCK NOT FOUND';
+                    $response['blocks'][$requestedBlockName] = 'BLOCK NOT FOUND';
                 }
             }
         }

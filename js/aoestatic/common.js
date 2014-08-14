@@ -6,28 +6,31 @@
  */
 var Aoe_Static = {
 
+    COOKIE_PREFIX: 'aoestatic_',
+    PLACEHOLDER_CLASS_NAME: '.as-placeholder',
+
     storeId: null,
     websiteId: null,
     fullActionName: null,
-    ajaxHomeUrl: null,
+    ajaxCallUrl: null,
     currentProductId: null,
 
-    init: function(ajaxhome_url, fullactionname, storeId, websiteId, currentproductid) {
+    init: function(ajaxHomeUrl, fullActionName, storeId, websiteId, currentProductId) {
+        this.ajaxCallUrl = ajaxHomeUrl;
         this.storeId = storeId;
         this.websiteId = websiteId;
-        this.fullActionName = fullactionname;
-        this.ajaxHomeUrl = ajaxhome_url;
-        this.currentProductId = currentproductid;
+        this.fullActionName = fullActionName;
+        this.currentProductId = currentProductId;
 
         this.populatePage();
     },
 
     /**
-     * populate page
+     * Populate page
      */
     populatePage: function() {
         this.replaceCookieContent();
-        this.replaceAjaxBlocks();
+        this.replacePlaceholderBlocks();
         if (this.isLoggedIn()) {
             jQuery('.aoestatic_notloggedin').hide();
             jQuery('.aoestatic_loggedin').show();
@@ -43,7 +46,6 @@ var Aoe_Static = {
     replaceCookieContent: function() {
         jQuery.each(this.getCookieContent(), function(name, value) {
             jQuery('.aoestatic_' + name).text(value);
-            // console.log('Replacing ".aoestatic_' + name + '" with "' + value + '"');
         })
     },
 
@@ -56,10 +58,15 @@ var Aoe_Static = {
      * Get info from cookies
      */
     getCookieContent: function() {
-        // expected format as_[g|w<websiteId>|s<storeId>]
+        // expected format of cookie name: {Aoe_Static.COOKIE_PREFIX}_[g|w<websiteId>|s<storeId>]
+        // check first that there is at least one cookie in such format, otherwise just return {}
+        if (document.cookie.indexOf(Aoe_Static.COOKIE_PREFIX) == -1) {
+            return {};
+        }
+
         var values = {};
         jQuery.each(jQuery.cookie(), function(name, value) {
-            if (name.substr(0, 10) == 'aoestatic_') {
+            if (name.substr(0, 10) == Aoe_Static.COOKIE_PREFIX) {
                 name = name.substr(10);
                 var parts = name.split('_');
                 var scope = parts.splice(0, 1)[0];
@@ -87,57 +94,56 @@ var Aoe_Static = {
     },
 
     /**
-     * Load block content from server
+     * Collect placeholder blocks (html elements marked with this.PLACEHOLDER_CLASS_NAME class)
+     *
+     * @returns {string[]}
      */
-    replaceAjaxBlocks: function() {
-        jQuery(document).ready(function($) {
-            var data = {
-                getBlocks: {}
-            };
+    collectPlaceholderBlocks: function() {
+        var blocks = [];
+        jQuery(this.PLACEHOLDER_CLASS_NAME).each(function() {
+            var rel = jQuery(this).attr('rel');
+            if (rel) {
+                blocks.push(rel);
+            } else {
+                throw 'Found placeholder without rel attribute';
+            }
+        });
 
-            // add placeholders
-            var counter = 0;
-            $('.as-placeholder').each(function() {
-                var id = $(this).attr('id');
-                if (!id) {
-                    // create dynamic id
-                    id = 'ph_' + counter;
-                    $(this).attr('id', id);
-                }
-                var rel = $(this).attr('rel');
-                if (rel) {
-                    data.getBlocks[id] = rel;
-                    counter++;
-                } else {
-                    // console.log(this);
-                    throw 'Found placeholder without rel attribute';
-                }
-            });
+        return blocks;
+    },
+
+    /**
+     * Load placeholder blocks content from server with ajax
+     *
+     * @param {string[]} [blocks]
+     */
+    replacePlaceholderBlocks: function(blocks) {
+        // allow reload specific blocks
+        blocks = blocks || this.collectPlaceholderBlocks();
+        if (Object.keys(blocks).length > 0) {
+            var data = {'blocks': blocks};
 
             // add current product
-            /* This needs some serious refactoring anyways...
-            if (typeof currentproductid !== 'undefined' && currentproductid) {
-                data.currentProductId = currentproductid;
+            if (this.currentProductId) {
+                data['currentProductId'] = this.currentProductId;
             }
-            */
 
             // E.T. phone home
-            if (typeof data.currentProductId !== 'undefined' || counter > 0) {
-                $.get(
-                    this.ajaxHomeUrl,
-                    data,
-                    function (response) {
-                        for(var id in response.blocks) {
-                            $('#' + id).html(response.blocks[id]);
-                        }
-                        jQuery('body').trigger('aoestatic_afterblockreplace');
-                    },
-                    'json'
-                );
-            }
-
-        });
+            jQuery.get(
+                Aoe_Static.ajaxCallUrl,
+                data,
+                function (response) {
+                    var $body = jQuery('body');
+                    $body.trigger('aoestatic_beforeblockreplace');
+                    for (var rel in response.blocks) {
+                        $body.trigger('aoestatic_beforeblock_' + rel + '_replace');
+                        jQuery(Aoe_Static.PLACEHOLDER_CLASS_NAME + '[rel="' + rel + '"]').html(response.blocks[rel]);
+                        $body.trigger('aoestatic_afterblock_' + rel + '_replace');
+                    }
+                    $body.trigger('aoestatic_afterblockreplace');
+                },
+                'json'
+            );
+        }
     }
 };
-
-
