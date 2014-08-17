@@ -14,9 +14,7 @@ class Aoe_Static_Block_Beforebodyend extends Mage_Core_Block_Template
      */
     public function getAjaxCallUrl()
     {
-        $params = Mage::app()->getStore()->isCurrentlySecure() ? array('_secure' => 1) : array();
-
-        return Mage::getUrl('aoestatic/call/index', $params);
+        return str_replace(array('http:', 'https:'), '', Mage::getUrl('aoestatic/call/index'));
     }
 
     /**
