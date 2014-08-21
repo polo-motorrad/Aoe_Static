@@ -78,8 +78,8 @@ class Aoe_Static_Model_Observer
         // gather information for replace array
         $customerName = '';
         $loggedIn     = '0';
-        $session      = Mage::getSingleton('customer/session');
         /* @var $session Mage_Customer_Model_Session */
+        $session      = Mage::getSingleton('customer/session');
         if ($session->isLoggedIn()) {
             $loggedIn     = '1';
             $customerName = Mage::helper('core')->escapeHtml($session->getCustomer()->getName());
@@ -211,7 +211,7 @@ class Aoe_Static_Model_Observer
 
         $this->checkForMessages();
 
-        $layout->getUpdate()->addHandle($this->getHandles($action->getFullActionName())        $layout->getUpdate()->addHandle($this->getHandles($action->getFullActionName()));
+        $layout->getUpdate()->addHandle($this->getHandles($action->getFullActionName()));
     }
 
     /**
