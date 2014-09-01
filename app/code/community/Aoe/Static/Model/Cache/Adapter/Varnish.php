@@ -60,7 +60,7 @@ class Aoe_Static_Model_Cache_Adapter_Varnish implements Aoe_Static_Model_Cache_A
 
         foreach ($this->_varnishServers as $varnishServer) {
             foreach ($urls as $url) {
-                $varnishUrl = "http://" . $varnishServer . '/' . $url;
+                $varnishUrl = "http://" . $varnishServer . '/' . ltrim($url, '/');
 
                 $curlHandler = curl_init();
                 curl_setopt($curlHandler, CURLOPT_URL, $varnishUrl);
