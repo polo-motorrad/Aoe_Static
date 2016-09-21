@@ -112,6 +112,11 @@ var Aoe_Static = {
                 if (rel) {
                     if (localStorage.getItem('aoe_static_blocks_' + rel)) {
                         $('#' + id).html(localStorage.getItem('aoe_static_blocks_' + rel));
+                        jQuery('body').trigger('aoestatic_beforeblockreplace', {
+                            blocks : {
+                                id: localStorage.getItem('aoe_static_blocks_' + rel)
+                            }
+                        });
                     }
                     data.getBlocks[id] = rel;
                     counter++;
