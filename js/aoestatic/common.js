@@ -42,12 +42,13 @@ var Aoe_Static = {
      * Replace cookie content
      */
     replaceCookieContent: function() {
-        jQuery('body').trigger('aoestatic_beforecookiereplace');
+        var body = jQuery('body');
+        body.trigger('aoestatic_beforecookiereplace');
         jQuery.each(this.getCookieContent(), function(name, value) {
             jQuery('.aoestatic_' + name).text(value);
             // console.log('Replacing ".aoestatic_' + name + '" with "' + value + '"');
-        })
-        jQuery('body').trigger('aoestatic_aftercookiereplace');
+        });
+        body.trigger('aoestatic_aftercookiereplace');
     },
 
     isLoggedIn: function() {
@@ -102,13 +103,20 @@ var Aoe_Static = {
             // add placeholders
             var counter = 0;
             $('.as-placeholder').each(function() {
-                var id = $(this).attr('id');
+                var t = $(this);
+                var id = t.attr('id');
+
                 if (!id) {
                     // create dynamic id
                     id = 'ph_' + counter;
-                    $(this).attr('id', id);
+                    t.attr('id', id);
                 }
-                var rel = $(this).attr('rel');
+
+                var rel = t.data('rel');
+                if (typeof(rel) === 'undefined') {
+                    rel = t.attr('rel');
+                }
+
                 if (rel) {
                     if (localStorage.getItem('aoe_static_blocks_' + rel)) {
                         $('#' + id).html(localStorage.getItem('aoe_static_blocks_' + rel));
