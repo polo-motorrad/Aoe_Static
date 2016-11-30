@@ -95,9 +95,13 @@ var Aoe_Static = {
      * Load block content from server
      */
     replaceAjaxBlocks: function() {
+        var o = this;
         jQuery(document).ready(function($) {
             var data = {
-                getBlocks: {}
+                getBlocks   : {},
+                productId   : o.currentProductId,
+                storeId     : o.storeId,
+                websiteId   : o.websiteId
             };
 
             // add placeholders
