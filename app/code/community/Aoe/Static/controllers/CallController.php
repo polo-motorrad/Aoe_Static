@@ -8,6 +8,11 @@
  */
 class Aoe_Static_CallController extends Mage_Core_Controller_Front_Action
 {
+    public function _construct()
+    {
+        Mage::register('ajax_request_content', 1);
+    }
+
     /**
      * places to look for messages
      *
