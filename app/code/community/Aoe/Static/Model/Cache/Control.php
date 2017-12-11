@@ -134,7 +134,8 @@ class Aoe_Static_Model_Cache_Control
             $response = Mage::app()->getResponse();
             $response->setHeader('Cache-Control', 'max-age=' . $maxAge, true);
             $response->setHeader('Expires', gmdate("D, d M Y H:i:s", time() + $maxAge) . ' GMT', true);
-            $response->setHeader('X-Tags', implode(self::TAG_DELIMITER, array_keys($this->_tags)));
+            // Header would be too big for Varnish to deliver it!
+            //$response->setHeader('X-Tags', implode(self::TAG_DELIMITER, array_keys($this->_tags)));
             $response->setHeader('X-Aoestatic', 'cache', true);
             $response->setHeader('X-Aoestatic-Lifetime', (int) $maxAge, true);
         }
